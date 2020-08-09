@@ -1,0 +1,98 @@
+﻿@implements IDisposable
+
+@page "/"
+
+<h1>Rock, Paper and Scissor</h1>
+<br />
+<h2 class="d-flex justify-content-center">@gameResult</h2>
+
+<div style="display:flex; justify-content:center; margin-bottom:20px">
+    <img src="./img/@opponentHand.Image" alt="@opponentHand.Image.Substring(0, opponentHand.Image.Length-4) image" class="image" />
+</div>
+
+<div style="display:flex; justify-content:space-around;">
+    @foreach (var item in hands)
+    {
+        <img src="./img/@item.Image" alt="@item.Image.Substring(0, item.Image.Length-4) image"
+             class="image selectable-image @item.Border" @onclick="(() => SelectUserHand(item))" />
+    }
+
+</div>
+
+<div class="d-flex justify-content-center mt-3">
+    <button class="btn btn-info" @onclick="OnPlayAgain" disabled=@buttonDisable>Play Again</button>
+</div>
+
+
+@code{
+
+    List<Hand> hands = new List<Hand>
+{
+        new Hand{Selection = OptionRPS.Rock, LosesAgainst = OptionRPS.Paper, WinsAgainst = OptionRPS.Scissor, Image = "rock.jpg"},
+        new Hand{Selection = OptionRPS.Paper, LosesAgainst = OptionRPS.Scissor, WinsAgainst = OptionRPS.Rock, Image = "paper.jpg"},
+        new Hand{Selection = OptionRPS.Scissor, LosesAgainst = OptionRPS.Rock, WinsAgainst = OptionRPS.Paper, Image = "scissor.jpg"},
+    };
+
+    Hand opponentHand;
+    Hand selectedHand;
+    string gameResult;
+    int randomNumber;
+    string imageBorder = null;
+    bool buttonDisable = true;
+
+    Timer timer;
+
+    protected override void OnInitialized()
+    {
+        opponentHand = hands[0];
+        timer = new Timer();
+        timer.Interval = 100;
+        timer.Elapsed += TimerOnElapsed1;
+        timer.Start();
+    }
+
+    private void TimerOnElapsed1(object sender, ElapsedEventArgs e)
+    {
+        int pastRandomNumber = randomNumber;
+
+        while (pastRandomNumber == randomNumber)
+        {
+            randomNumber = new Random().Next(0, hands.Count);
+        }
+
+        opponentHand = hands[randomNumber];
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        if (timer != null)
+        {
+            timer.Dispose();
+            Console.WriteLine("Code into Disposed method executed...");
+        }
+
+    }
+
+    public void SelectUserHand(Hand handSelected)
+    {
+        if (timer.Enabled == false)
+        {
+            return;
+        }
+        selectedHand = handSelected;
+        timer.Stop();
+        buttonDisable = false;
+        selectedHand.Border = "border border-primary";
+        gameResult = handSelected.PlayAgainst(opponentHand);
+
+    }
+
+    public void OnPlayAgain()
+    {
+        timer.Start();
+        gameResult = null;
+        selectedHand.Border = null;
+        buttonDisable = true;
+    }
+}
